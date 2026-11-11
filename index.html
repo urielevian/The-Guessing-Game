@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ed">
+  <title>משחק הניחושים</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f4ed;
+      --ink: #202c29;
+      --muted: #64716c;
+      --line: #d7dcd5;
+      --green: #277966;
+      --green-dark: #1c5d50;
+      --coral: #e87955;
+      --coral-dark: #c85e3d;
+      --blue: #39789a;
+      --blue-dark: #285d7a;
+      --yellow: #edc65e;
+      --yellow-dark: #d3aa3e;
+      --white: #fffefa;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 86% 9%, rgba(237, 198, 94, .17), transparent 28rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .page {
+      width: min(1060px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 52px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: white;
+    }
+
+    .brand-mark svg { width: 19px; height: 19px; }
+
+    .round-label {
+      display: inline-flex;
+      align-items: center;
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 15px;
+      background: var(--blue);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--blue-dark);
+      transition: background-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .round-label:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .round-label:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--blue-dark); }
+    .round-label:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 56px;
+      align-items: start;
+      padding-top: 54px;
+    }
+
+    .game-copy { padding-top: 6px; }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    h1 {
+      max-width: 12ch;
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 56px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      max-width: 40ch;
+      margin: 17px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .range-panel {
+      margin-top: 42px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    .range-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      font-size: 13px;
+    }
+
+    .range-heading span:first-child { color: var(--muted); }
+    .range-text { font-weight: 750; font-variant-numeric: tabular-nums; }
+
+    .track {
+      position: relative;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dfe4dd;
+      direction: ltr;
+    }
+
+    .track-range {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(var(--low) * 1%);
+      width: calc((var(--high) - var(--low)) * 1%);
+      min-width: 3px;
+      border-radius: inherit;
+      background: var(--green);
+      transition: left 280ms ease, width 280ms ease;
+    }
+
+    .track-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      direction: ltr;
+    }
+
+    .range-controls {
+      display: flex;
+      gap: 12px;
+      margin: 0 0 18px;
+    }
+
+    .range-field { display: grid; flex: 1; gap: 5px; }
+    .range-field label { margin: 0; color: var(--muted); font-size: 11px; }
+
+    .range-field input {
+      width: 100%;
+      min-width: 0;
+      height: 38px;
+      border: 1px solid #b9c3bc;
+      border-radius: 4px;
+      background: white;
+      color: var(--ink);
+      padding: 0 10px;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .range-field input:focus-visible { outline: 3px solid rgba(39, 121, 102, .3); border-color: var(--green); }
+
+    .start-round {
+      width: 100%;
+      height: 42px;
+      margin: -4px 0 16px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--coral);
+      color: white;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--coral-dark);
+      transition: background-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .start-round:hover { background: var(--coral-dark); transform: translateY(-1px); }
+    .start-round:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--coral-dark); }
+    .start-round:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+    .play-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 254, 250, .88);
+      padding: 26px;
+      box-shadow: 0 14px 40px rgba(32, 44, 41, .06);
+    }
+
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 17px;
+    }
+
+    .panel-top h2 { margin: 0; font-size: 16px; }
+
+    .attempt-count {
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+    }
+
+    form { margin-top: 23px; }
+
+    label {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .entry-row { display: flex; gap: 9px; }
+
+    input[type="number"] {
+      width: 100%;
+      min-width: 0;
+      height: 50px;
+      border: 1px solid #b9c3bc;
+      border-radius: 5px;
+      background: white;
+      color: var(--ink);
+      padding: 0 13px;
+      font-size: 17px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="number"]:focus-visible { outline: 3px solid rgba(39, 121, 102, .3); border-color: var(--green); }
+
+    .submit {
+      flex: 0 0 auto;
+      min-width: 104px;
+      height: 50px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--green);
+      color: white;
+      padding: 0 16px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background-color 140ms ease, transform 140ms ease;
+    }
+
+    .submit:hover { background: var(--green-dark); }
+    .submit:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--green-dark); }
+    .submit { box-shadow: 0 3px 0 var(--green-dark); }
+    .submit:focus-visible, .new-game:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+    .feedback {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      gap: 12px;
+      margin-top: 17px;
+      border-radius: 5px;
+      background: #f0f2ec;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .feedback-mark {
+      display: grid;
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      background: #dce8df;
+      color: var(--green-dark);
+      font-weight: 800;
+    }
+
+    .feedback[data-state="low"] .feedback-mark,
+    .feedback[data-state="high"] .feedback-mark { background: #f8e5db; color: #a64e32; }
+    .feedback[data-state="win"] { background: #e2f1e9; color: var(--green-dark); }
+    .feedback[data-state="win"] .feedback-mark { background: var(--green); color: white; }
+    .feedback[data-state="error"] { background: #fff1d2; color: #70551b; }
+    .feedback[data-state="error"] .feedback-mark { background: var(--yellow); color: #4a3911; }
+
+    .history-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: 25px;
+      font-size: 13px;
+    }
+
+    .history-head strong { font-size: 14px; }
+    .history-head span { color: var(--muted); }
+
+    .history {
+      display: flex;
+      min-height: 34px;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .history li {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: white;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history li.win { border-color: #a4d1bf; background: #e2f1e9; color: var(--green-dark); }
+
+    .history li.low { border-color: #9bd4cd; background: #e9f6f3; color: #176b63; }
+    .history li.high { border-color: #efc49e; background: #fff1e4; color: #a8522f; }
+
+    .victory {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 20px;
+      padding: 8px 0 2px;
+      animation: victory-pop 420ms cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    .victory[hidden] { display: none; }
+
+    .victory-symbol {
+      display: grid;
+      flex: 0 0 58px;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border: 2px solid #e8bd54;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fff8cc, #f3cf68 72%);
+      font-size: 30px;
+      box-shadow: 0 5px 0 #e7d8ab;
+    }
+
+    .victory h3 { margin: 0; color: #8c6413; font-size: 22px; }
+    .victory p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    @keyframes victory-pop {
+      from { opacity: 0; transform: translateY(8px) scale(.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .new-game {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--yellow);
+      color: #4a3911;
+      padding: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--yellow-dark);
+      transition: background-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .new-game.visible { display: block; }
+    .new-game:hover { background: var(--yellow-dark); transform: translateY(-1px); }
+    .new-game:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--yellow-dark); }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 28px, 560px); padding-top: 20px; }
+      main { grid-template-columns: 1fr; gap: 28px; padding-top: 34px; }
+      h1 { font-size: 43px; }
+      .intro { font-size: 15px; }
+      .range-panel { margin-top: 25px; }
+      .play-panel { padding: 21px; }
+    }
+
+    @media (max-width: 380px) {
+      .page { width: calc(100% - 22px); }
+      .play-panel { padding: 16px; }
+      .submit { min-width: 86px; padding-inline: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topline">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <span>משחק הניחושים</span>
+      </div>
+      <button class="round-label" id="new-round" type="button">סיבוב חדש</button>
+    </header>
+
+    <main>
+      <section class="game-copy" aria-labelledby="title">
+        <p class="eyebrow">מוכנים לחשוב קצת אחרת?</p>
+        <h1 id="title">מספר אחד. כמה ניסיונות?</h1>
+        <p class="intro" id="game-intro">בחרתי מספר בין 1 ל־100. בכל ניסיון אגלה לכם אם כדאי לעלות או לרדת. כמה מהר תמצאו אותו?</p>
+
+        <div class="range-panel">
+          <div class="range-heading">
+            <span>הטווח האפשרי</span>
+            <span class="range-text" id="range-text">1–100</span>
+          </div>
+          <div class="range-controls" aria-label="טווח המשחק">
+            <div class="range-field">
+              <label for="range-min">מספר מינימלי</label>
+              <input id="range-min" type="number" min="-1000000" max="1000000" step="1" value="1" inputmode="numeric">
+            </div>
+            <div class="range-field">
+              <label for="range-max">מספר מקסימלי</label>
+              <input id="range-max" type="number" min="-1000000" max="1000000" step="1" value="100" inputmode="numeric">
+            </div>
+          </div>
+          <button class="start-round" id="start-round" type="button">התחל</button>
+          <div class="track" id="track" role="img" aria-label="הטווח האפשרי כרגע הוא 1 עד 100">
+            <div class="track-range" id="track-range"></div>
+          </div>
+          <div class="track-labels"><span id="track-min">1</span><span id="track-max">100</span></div>
+        </div>
+      </section>
+
+      <section class="play-panel" aria-labelledby="panel-title">
+        <div class="panel-top">
+          <h2 id="panel-title">מה הניחוש שלכם?</h2>
+          <span class="attempt-count" id="attempt-count">0 ניסיונות</span>
+        </div>
+
+        <form id="guess-form" novalidate>
+          <label for="guess" id="guess-label">הקלידו מספר בין 1 ל־100</label>
+          <div class="entry-row">
+            <input id="guess" name="guess" type="number" min="1" max="100" inputmode="numeric" autocomplete="off" placeholder="למשל 42" aria-describedby="feedback">
+            <button class="submit" id="submit" type="submit">נחשו</button>
+          </div>
+        </form>
+
+        <div class="feedback" id="feedback" data-state="start" role="status" aria-live="polite">
+          <span class="feedback-mark" id="feedback-mark" aria-hidden="true">?</span>
+          <span id="feedback-text">הכניסו את הניחוש הראשון כדי להתחיל.</span>
+        </div>
+
+        <section class="victory" id="victory" aria-labelledby="victory-title" hidden>
+          <span class="victory-symbol" aria-hidden="true">🏆</span>
+          <div>
+            <h3 id="victory-title">יש! מצאתם!</h3>
+            <p id="victory-text"></p>
+          </div>
+        </section>
+
+        <div class="history-head">
+          <strong>הניסיונות שלכם</strong>
+          <span id="history-count">עדיין לא ניחשתם</span>
+        </div>
+        <ol class="history" id="history" aria-label="היסטוריית הניחושים"></ol>
+        <button class="new-game" id="new-game" type="button">שחקו שוב</button>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const form = document.querySelector('#guess-form');
+    const input = document.querySelector('#guess');
+    const submit = document.querySelector('#submit');
+    const feedback = document.querySelector('#feedback');
+    const feedbackMark = document.querySelector('#feedback-mark');
+    const feedbackText = document.querySelector('#feedback-text');
+    const attemptCount = document.querySelector('#attempt-count');
+    const historyCount = document.querySelector('#history-count');
+    const history = document.querySelector('#history');
+    const rangeText = document.querySelector('#range-text');
+    const track = document.querySelector('#track');
+    const trackRange = document.querySelector('#track-range');
+    const trackMin = document.querySelector('#track-min');
+    const trackMax = document.querySelector('#track-max');
+    const rangeMinInput = document.querySelector('#range-min');
+    const rangeMaxInput = document.querySelector('#range-max');
+    const guessLabel = document.querySelector('#guess-label');
+    const gameIntro = document.querySelector('#game-intro');
+    const newRound = document.querySelector('#new-round');
+    const startRound = document.querySelector('#start-round');
+    const newGame = document.querySelector('#new-game');
+    const victory = document.querySelector('#victory');
+    const victoryText = document.querySelector('#victory-text');
+
+    let answer;
+    let attempts;
+    let lowest;
+    let highest;
+    let gameMin;
+    let gameMax;
+    let finished;
+
+    function startGame() {
+      const selectedMin = Number(rangeMinInput.value);
+      const selectedMax = Number(rangeMaxInput.value);
+      if (!rangeMinInput.value.trim() || !rangeMaxInput.value.trim()
+        || !Number.isInteger(selectedMin) || !Number.isInteger(selectedMax)
+        || selectedMin < -1000000 || selectedMin > 1000000
+        || selectedMax < -1000000 || selectedMax > 1000000
+        || selectedMin >= selectedMax) {
+        showFeedback('error', '!', 'בחרו שני מספרים שלמים, והמינימום צריך להיות קטן מהמקסימום.');
+        (selectedMin >= selectedMax ? rangeMaxInput : rangeMinInput).focus();
+        return;
+      }
+
+      gameMin = selectedMin;
+      gameMax = selectedMax;
+      answer = Math.floor(Math.random() * (gameMax - gameMin + 1)) + gameMin;
+      attempts = 0;
+      lowest = gameMin;
+      highest = gameMax;
+      finished = false;
+      history.replaceChildren();
+      input.value = '';
+      input.min = String(gameMin);
+      input.max = String(gameMax);
+      input.disabled = false;
+      submit.disabled = false;
+      newGame.classList.remove('visible');
+      victory.hidden = true;
+      feedback.dataset.state = 'start';
+      feedbackMark.textContent = '?';
+      feedbackText.textContent = 'הכניסו את הניחוש הראשון כדי להתחיל.';
+      gameIntro.textContent = `בחרתי מספר בין ${gameMin} ל־${gameMax}. בכל ניסיון אגלה לכם אם כדאי לעלות או לרדת. כמה מהר תמצאו אותו?`;
+      updateDisplay();
+      input.focus();
+    }
+
+    function updateDisplay() {
+      attemptCount.textContent = `${attempts} ${attempts === 1 ? 'ניסיון' : 'ניסיונות'}`;
+      historyCount.textContent = attempts === 0 ? 'עדיין לא ניחשתם' : `${attempts} ${attempts === 1 ? 'ניחוש' : 'ניחושים'}`;
+      rangeText.textContent = `${lowest}–${highest}`;
+      guessLabel.textContent = `הקלידו מספר בין ${lowest} ל־${highest}`;
+      trackMin.textContent = String(gameMin);
+      trackMax.textContent = String(gameMax);
+      const rangeSize = gameMax - gameMin + 1;
+      track.style.setProperty('--low', String((lowest - gameMin) / rangeSize * 100));
+      track.style.setProperty('--high', String((highest - gameMin + 1) / rangeSize * 100));
+      track.setAttribute('aria-label', `הטווח האפשרי כרגע הוא ${lowest} עד ${highest}`);
+    }
+
+    function showFeedback(state, mark, message) {
+      feedback.dataset.state = state;
+      feedbackMark.textContent = mark;
+      feedbackText.textContent = message;
+    }
+
+    function addGuess(value, result, mark) {
+      const item = document.createElement('li');
+      item.className = result;
+      const number = document.createElement('strong');
+      number.textContent = String(value);
+      const hint = document.createElement('span');
+      hint.textContent = mark;
+      item.append(number, hint);
+      history.append(item);
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (finished) return;
+
+      const value = Number(input.value);
+      if (!Number.isInteger(value) || value < lowest || value > highest) {
+        showFeedback('error', '!', `בחרו מספר שלם בין ${lowest} ל־${highest}.`);
+        input.focus();
+        return;
+      }
+
+      attempts += 1;
+      if (value === answer) {
+        addGuess(value, 'win', 'נכון');
+        showFeedback('win', '✓', `מצאתם את המספר ${answer} ב־${attempts} ${attempts === 1 ? 'ניסיון' : 'ניסיונות'}!`);
+        victoryText.textContent = `פגעתם בול אחרי ${attempts} ${attempts === 1 ? 'ניסיון' : 'ניסיונות'}. כל הכבוד!`;
+        victory.hidden = false;
+        finished = true;
+        input.disabled = true;
+        submit.disabled = true;
+        newGame.classList.add('visible');
+      } else if (value < answer) {
+        addGuess(value, 'low', '↑');
+        lowest = value + 1;
+        showFeedback('low', '↑', 'המספר שלי גבוה יותר. נסו מספר גדול יותר.');
+      } else {
+        addGuess(value, 'high', '↓');
+        highest = value - 1;
+        showFeedback('high', '↓', 'המספר שלי נמוך יותר. נסו מספר קטן יותר.');
+      }
+
+      updateDisplay();
+      if (!finished) {
+        input.value = '';
+        input.focus();
+      }
+    });
+
+    newRound.addEventListener('click', startGame);
+    startRound.addEventListener('click', startGame);
+    newGame.addEventListener('click', startGame);
+    startGame();
+  </script>
+</body>
+</html>
