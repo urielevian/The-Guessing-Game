@@ -479,7 +479,7 @@
         <form id="guess-form" novalidate>
           <label for="guess" id="guess-label">הקלידו מספר בין 1 ל־100</label>
           <div class="entry-row">
-            <input id="guess" name="guess" type="number" min="1" max="100" inputmode="numeric" autocomplete="off" placeholder="למשל 42" aria-describedby="feedback">
+            <input id="guess" name="guess" type="number" min="1" max="100" inputmode="numeric" autocomplete="off" aria-describedby="feedback">
             <button class="submit" id="submit" type="submit">נחשו</button>
           </div>
         </form>
@@ -564,6 +564,7 @@
       input.value = '';
       input.min = String(gameMin);
       input.max = String(gameMax);
+      input.placeholder = `למשל ${Math.floor((gameMin + gameMax) / 2)}`;
       input.disabled = false;
       submit.disabled = false;
       newGame.classList.remove('visible');
@@ -611,8 +612,17 @@
       if (finished) return;
 
       const value = Number(input.value);
-      if (!Number.isInteger(value) || value < lowest || value > highest) {
-        showFeedback('error', '!', `בחרו מספר שלם בין ${lowest} ל־${highest}.`);
+      if (!Number.isInteger(value) || value < gameMin || value > gameMax) {
+        showFeedback('error', '!', `בחרו מספר שלם בין ${gameMin} ל־${gameMax}.`);
+        input.focus();
+        return;
+      }
+
+      const alreadyGuessed = Array.from(history.children).some(item => 
+        Number(item.querySelector('strong').textContent) === value
+      );
+      if (alreadyGuessed) {
+        showFeedback('error', '!', `כבר ניחשתם ${value}. נסו מספר אחר.`);
         input.focus();
         return;
       }
@@ -626,15 +636,18 @@
         finished = true;
         input.disabled = true;
         submit.disabled = true;
+        input.placeholder = '';
         newGame.classList.add('visible');
       } else if (value < answer) {
         addGuess(value, 'low', '↑');
         lowest = value + 1;
         showFeedback('low', '↑', 'המספר שלי גבוה יותר. נסו מספר גדול יותר.');
+        input.placeholder = '';
       } else {
         addGuess(value, 'high', '↓');
         highest = value - 1;
         showFeedback('high', '↓', 'המספר שלי נמוך יותר. נסו מספר קטן יותר.');
+        input.placeholder = '';
       }
 
       updateDisplay();
